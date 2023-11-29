@@ -60,6 +60,7 @@ def load(model_name_or_path):
         device_map="auto",
         torch_dtype=torch.float16,
         offload_folder="offload",
+        offload_state_dict = True,
         trust_remote_code=True,
     )
     if tokenizer.pad_token_id is None:
