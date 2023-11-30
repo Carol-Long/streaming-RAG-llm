@@ -10,12 +10,19 @@ def generate_line(line_number, count):
 # Generate 200 lines
 lines = [generate_line(line_number, 23) for line_number in range(1, 211)]
 
+result_strings = []
 # Combine the lines into a single string
-result_string = '\n'.join(lines)
+for i in range(11):
+    if i != 10:
+        result_string = '\n'.join(lines[i*20:(i+1)*20])
+    else:
+        result_string = '\n'.join(lines[i*20:])
+    result_strings.append(result_string)
 
+result_strings.append("What is the first number in line 3?")
 # Define a list of dictionaries with the desired format
 questions = [
-    {"question_id": 81, "category": "extraction", "turns": [result_string, "What is the first number in line 3?"], "reference": [lines[2].split(' ')[2]]},
+    {"question_id": 81, "category": "extraction", "turns": result_strings, "reference": [lines[2].split(' ')[2]]},
 ]
 
 # Convert the list of dictionaries to a JSON-formatted string
