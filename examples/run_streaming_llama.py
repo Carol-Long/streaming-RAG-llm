@@ -70,9 +70,10 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
             space_needed = seq_len + max_gen_len
             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
 
-        past_key_values = greedy_generate(
-            model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
-        )
+        if prompt[0] != "L":
+            past_key_values = greedy_generate(
+                model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
+            )
 
 
 def main(args):
