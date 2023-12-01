@@ -45,28 +45,32 @@ def generate_story(story_number, main_character=None):
     story = f"{character} {action} {setting}."
     return f"Story {story_number}: {story}"
 
-# Function to generate the stories and a follow-up question
+# Function to generate the stories and a specific follow-up question
 def generate_story_set(num_sets, num_stories=10):
     story_sets = []
 
     for _ in range(num_sets):
         # Randomly choose a main character for story 2
-        main_character = random.choice(["wizard", "knight", "dragon", "princess", "alien"])
+        main_character = random.choice([
+            "wizard", "knight", "dragon", "princess", "alien",
+            "detective", "robot", "pirate", "ghost", "superhero",
+            # Add more characters as needed
+        ])
         
         # Generate a set of fake stories
         stories = [generate_story(i + 1, main_character if i == 1 else None) for i in range(num_stories)]
         
-        # Compile stories into one string
-        joined_stories = " ".join(stories)
+        # Compile stories into a list
+        story_list = ["Line " + str(i + 1) + ": " + story for i, story in enumerate(stories)]
         
-        # Create a follow-up statement to direct the model to talk about the main character from story 2
-        follow_up_statement = f"Tell me more about the {main_character}."
+        # Create a follow-up question about the main character in story 2
+        follow_up_question = f"Tell me more about the {main_character} in Story 2."
 
         story_sets.append({
-            "stories": joined_stories,
-            "follow_up": follow_up_statement,
-            # The main character in story 2 is the reference answer
-            "reference": stories[1]
+            "question_id": _ + 1,  # Question ID
+            "category": "extraction",
+            "turns": story_list + [follow_up_question],
+            "reference": stories[1]  # The main character in story 2 is the reference
         })
 
     return story_sets
