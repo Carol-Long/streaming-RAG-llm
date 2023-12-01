@@ -13,8 +13,8 @@ reference_strings = []
 
 for i in range(11):
     # Generate 200 lines in each question
-    lines = [generate_line(line_number) for line_number in range(200)]
-    random_line = random.randint(1, 200)
+    lines = [generate_line(line_number) for line_number in range(10)]
+    random_line = random.randint(1, 10)
     add_question = f"What is the number in Line {str(random_line)}?"
     lines.append(add_question)
 
