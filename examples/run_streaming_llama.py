@@ -62,29 +62,62 @@ def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
 
 
 @torch.no_grad()
-def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
+def streaming_inference(model, tokenizer, story_sets, kv_cache=None, max_gen_len=1000):
     past_key_values = None
-    for idx, prompt in enumerate(prompts):
-        # Check if the prompt is a question
-        if "In which line can we learn about" in prompt:
-            formatted_prompt = f"USER: {prompt}\n\nASSISTANT: "
-        else:
-            formatted_prompt = f"FACT: {prompt}"  # Non-question fact lines
+    for story_set in story_sets:
+        # Print all stories
+        stories = story_set['stories']
+        print("\nSTORIES:", stories, end="\n\n")
 
-        print("\n" + formatted_prompt, end="")
+        # Now the model should generate more information about the main character from story 2
+        follow_up = story_set['follow_up']
+        print("FOLLOW UP:", follow_up, end="\n\n")
+        
+        # Concatenate stories and follow-up with proper formatting for the model
+        formatted_prompt = f"{stories}\n\n{follow_up}\n\nASSISTANT: "
+        
         input_ids = tokenizer(formatted_prompt, return_tensors="pt").input_ids
         input_ids = input_ids.to(model.device)
         seq_len = input_ids.shape[1]
 
+        # If using a key-value cache, evict to make space as needed
         if kv_cache is not None:
             space_needed = seq_len + max_gen_len
             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
 
-        # Generate response only for questions
-        if "In which line can we learn about" in prompt:
-            past_key_values = greedy_generate(
-                model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
-            )
+        # Generate the response for the follow-up
+        past_key_values = greedy_generate(
+            model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
+        )
+
+
+# for asking facts 
+# @torch.no_grad()
+# def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
+#     past_key_values = None
+#     for idx, prompt in enumerate(prompts):
+#         # Check if the prompt is a question
+#         if "In which line can we learn about" in prompt:
+#             formatted_prompt = f"USER: {prompt}\n\nASSISTANT: "
+#         else:
+#             formatted_prompt = f"FACT: {prompt}"  # Non-question fact lines
+
+#         print("\n" + formatted_prompt, end="")
+#         input_ids = tokenizer(formatted_prompt, return_tensors="pt").input_ids
+#         input_ids = input_ids.to(model.device)
+#         seq_len = input_ids.shape[1]
+
+#         if kv_cache is not None:
+#             space_needed = seq_len + max_gen_len
+#             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
+
+#         # Generate response only for questions
+#         if "In which line can we learn about" in prompt:
+#             past_key_values = greedy_generate(
+#                 model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
+#             )
+
+## for integer questions
 #@torch.no_grad()
 # def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
 #     past_key_values = None
@@ -113,7 +146,7 @@ def main(args):
     model_name_or_path = args.model_name_or_path
     model, tokenizer = load(model_name_or_path)
     #test_filepath = os.path.join(args.data_root, "questions_joined.jsonl")
-    test_filepath = os.path.join(args.data_root, "simplified_questions.jsonl")
+    test_filepath = os.path.join(args.data_root, "unique_story_sets.jsonl")
     print(f"Loading data from {test_filepath} ...")
 
     # if not os.path.exists(test_filepath):
