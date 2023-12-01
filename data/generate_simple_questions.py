@@ -98,7 +98,7 @@ print("Test script started.")
 
 try:
     # Generate 10 QA pairs
-    qa_pairs = generate_qa_pairs(1)
+    qa_pairs = generate_qa_pairs(3)
 
     # Write the QA pairs to a JSON Lines file
     json_filename = "simplified_questions.jsonl"
