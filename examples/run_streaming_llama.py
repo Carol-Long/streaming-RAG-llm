@@ -17,6 +17,10 @@ from streaming_llm.enable_streaming_llm import enable_streaming_llm
 
 @torch.no_grad()
 def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
+
+    if model.device.type == 'cpu':
+        model = model.float()
+
     outputs = model(
         input_ids=input_ids,
         past_key_values=past_key_values,
