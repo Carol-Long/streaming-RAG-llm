@@ -61,19 +61,21 @@ def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
 def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
     past_key_values = None
     for idx, prompt in enumerate(prompts):
-        if prompt[0:6] == "Line 0" or prompt[0] == "L":
-            if prompt[0:6] == "Line 0":
-                prompt = "USER: " + prompt 
-            print("\n" + prompt, end="")
-            input_ids = tokenizer(prompt, return_tensors="pt").input_ids
-            # print(tokenizer.decode(input_ids[0].tolist(), skip_special_tokens=False))
-            input_ids = input_ids.to(model.device)
-            seq_len = input_ids.shape[1]
-            if kv_cache is not None:
-                space_needed = seq_len + max_gen_len
-                past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
-        else:
+        if prompt[0:6] == "Line 0":
+            prompt = "USER: " + prompt 
+        elif prompt[0] == "W":
             prompt = prompt + "\n\nASSISTANT: "
+        # else just print prompt
+            
+        print("\n" + prompt, end="")
+        input_ids = tokenizer(prompt, return_tensors="pt").input_ids
+        # print(tokenizer.decode(input_ids[0].tolist(), skip_special_tokens=False))
+        input_ids = input_ids.to(model.device)
+        seq_len = input_ids.shape[1]
+        if kv_cache is not None:
+            space_needed = seq_len + max_gen_len
+            past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
+        if prompt[0]=="W":       
             past_key_values = greedy_generate(
                     model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
                 )
