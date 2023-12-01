@@ -84,7 +84,7 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
 def main(args):
     model_name_or_path = args.model_name_or_path
     model, tokenizer = load(model_name_or_path)
-    test_filepath = os.path.join(args.data_root, "questions.jsonl")
+    test_filepath = os.path.join(args.data_root, "questions_joined.jsonl")
     print(f"Loading data from {test_filepath} ...")
 
     # if not os.path.exists(test_filepath):
