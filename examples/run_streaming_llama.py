@@ -64,36 +64,27 @@ def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
 @torch.no_grad()
 def streaming_inference(model, tokenizer, story_sets, kv_cache=None, max_gen_len=1000):
     past_key_values = None
-    for story_set in story_sets:
+    for idx, prompt in story_sets:
         # Extract the stories and the follow-up question
-        *stories, follow_up_question = story_set['turns']
+        if "Tell me more about" in prompt:
+            formatted_prompt = f"USER: {prompt}\n\nASSISTANT: "
+        else:
+            formatted_prompt = f"Stories: {prompt}"  # Non-question fact lines
 
-        # Print all stories
-        for story in stories:
-            print("\n" + story)
-
-        # Now the model should generate more information based on the follow-up question
-        print("\nFOLLOW UP:", follow_up_question, end="\n\n")
-
-        # Concatenate stories and follow-up with proper formatting for the model
-        formatted_prompt = f"{' '.join(stories)}\n\n{follow_up_question}\n\nASSISTANT: "
-        
+        print("\n" + formatted_prompt, end="")
         input_ids = tokenizer(formatted_prompt, return_tensors="pt").input_ids
         input_ids = input_ids.to(model.device)
         seq_len = input_ids.shape[1]
 
-        # If using a key-value cache, evict to make space as needed
         if kv_cache is not None:
             space_needed = seq_len + max_gen_len
             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
 
-        # Generate the response for the follow-up question
-        past_key_values = greedy_generate(
-            model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
-        )
-
-
-
+        # Generate response only for questions
+        if "In which line can we learn about" in prompt:
+            past_key_values = greedy_generate(
+                model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
+            )
 
 # for asking facts 
 # @torch.no_grad()
