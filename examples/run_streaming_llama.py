@@ -62,19 +62,21 @@ def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
 
 
 @torch.no_grad()
-def streaming_inference(model, tokenizer, story_sets, kv_cache=None, max_gen_len=1000):
+def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
     past_key_values = None
-    for story_set in story_sets:
-        # Print all stories
-        stories = story_set['stories']
-        print("\nSTORIES:", stories, end="\n\n")
+    for idx, prompt_set in enumerate(prompts):
+        # Separate the stories and the follow-up question
+        *stories, follow_up_question = prompt_set
 
-        # Now the model should generate more information about the main character from story 2
-        follow_up = story_set['follow_up']
-        print("FOLLOW UP:", follow_up, end="\n\n")
-        
+        # Print all stories
+        for story in stories:
+            print("\n" + story)
+
+        # Now the model should generate more information based on the follow-up question
+        print("\nFOLLOW UP:", follow_up_question, end="\n\n")
+
         # Concatenate stories and follow-up with proper formatting for the model
-        formatted_prompt = f"{stories}\n\n{follow_up}\n\nASSISTANT: "
+        formatted_prompt = f"{' '.join(stories)}\n\n{follow_up_question}\n\nASSISTANT: "
         
         input_ids = tokenizer(formatted_prompt, return_tensors="pt").input_ids
         input_ids = input_ids.to(model.device)
@@ -85,10 +87,11 @@ def streaming_inference(model, tokenizer, story_sets, kv_cache=None, max_gen_len
             space_needed = seq_len + max_gen_len
             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
 
-        # Generate the response for the follow-up
+        # Generate the response for the follow-up question
         past_key_values = greedy_generate(
             model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
         )
+
 
 
 # for asking facts 
