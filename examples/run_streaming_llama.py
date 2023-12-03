@@ -81,7 +81,7 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
 
         # Generate response only for questions
-        if "In which line can we learn about" in prompt:
+        if "Tell me more about" in prompt:
             past_key_values = greedy_generate(
                 model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
             )
