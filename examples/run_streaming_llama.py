@@ -62,9 +62,9 @@ def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
 
 
 @torch.no_grad()
-def streaming_inference(model, tokenizer, story_sets, kv_cache=None, max_gen_len=1000):
+def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
     past_key_values = None
-    for idx, prompt in story_sets:
+    for idx, prompt in enumerate(prompts):
         # Extract the stories and the follow-up question
         if "Tell me more about" in prompt:
             formatted_prompt = f"USER: {prompt}\n\nASSISTANT: "
