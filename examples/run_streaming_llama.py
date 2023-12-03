@@ -62,11 +62,11 @@ def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
 
 
 @torch.no_grad()
-def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
+def streaming_inference(model, tokenizer, story_sets, kv_cache=None, max_gen_len=1000):
     past_key_values = None
-    for idx, prompt_set in enumerate(prompts):
-        # Separate the stories and the follow-up question
-        *stories, follow_up_question = prompt_set
+    for story_set in story_sets:
+        # Extract the stories and the follow-up question
+        *stories, follow_up_question = story_set['turns']
 
         # Print all stories
         for story in stories:
@@ -91,6 +91,7 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
         past_key_values = greedy_generate(
             model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
         )
+
 
 
 
