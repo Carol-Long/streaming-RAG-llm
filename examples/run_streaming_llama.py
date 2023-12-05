@@ -173,7 +173,7 @@ def main(args):
     model_name_or_path = args.model_name_or_path
     model, tokenizer = load(model_name_or_path)
     #test_filepath = os.path.join(args.data_root, "questions_joined.jsonl")
-    test_filepath = os.path.join(args.data_root, "unique_story_sets.jsonl")
+    test_filepath = os.path.join(args.data_root, "unique_story_sets_new.jsonl")
     print(f"Loading data from {test_filepath} ...")
 
     # if not os.path.exists(test_filepath):
