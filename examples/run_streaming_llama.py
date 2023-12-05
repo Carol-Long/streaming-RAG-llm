@@ -60,36 +60,54 @@ def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
     print(" ".join(generated_text[pos:]), flush=True)
     return past_key_values
 
-# unique stories in the original format
+
 @torch.no_grad()
-def streaming_inference(model, tokenizer, story_sets, kv_cache=None, max_gen_len=500):
+def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
     past_key_values = None
-
-    for idx, prompt in enumerate(story_sets):
-        # Check if the turn is a story or a question
-        if "repeat the story" in prompt:
-                # This is the follow-up question
-            formatted_prompt = f"USER: {prompt}\n\nASSISTANT: "
-            generate_response = True
-        else:
-            # This is a story line
-            formatted_prompt = f"Stories: {prompt}"  # Non-question story lines
-            generate_response = False
-
-        print("\n" + formatted_prompt, end="")
-        input_ids = tokenizer(formatted_prompt, return_tensors="pt").input_ids
+    for idx, prompt in enumerate(prompts):
+        prompt = "USER: " + prompt + "\n\nASSISTANT: "
+        print("\n" + prompt, end="")
+        input_ids = tokenizer(prompt, return_tensors="pt").input_ids
         input_ids = input_ids.to(model.device)
         seq_len = input_ids.shape[1]
-
         if kv_cache is not None:
             space_needed = seq_len + max_gen_len
             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
 
-        # Generate response only for questions
-        if generate_response:
-            past_key_values = greedy_generate(
-                model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
-            )
+        past_key_values = greedy_generate(
+            model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
+        )
+
+# unique stories in the original format
+# @torch.no_grad()
+# def streaming_inference(model, tokenizer, story_sets, kv_cache=None, max_gen_len=500):
+#     past_key_values = None
+
+#     for idx, prompt in enumerate(story_sets):
+#         # Check if the turn is a story or a question
+#         if "repeat the story" in prompt:
+#                 # This is the follow-up question
+#             formatted_prompt = f"USER: {prompt}\n\nASSISTANT: "
+#             generate_response = True
+#         else:
+#             # This is a story line
+#             formatted_prompt = f"{prompt}"
+#             generate_response = False
+
+#         print("\n" + formatted_prompt, end="")
+#         input_ids = tokenizer(formatted_prompt, return_tensors="pt").input_ids
+#         input_ids = input_ids.to(model.device)
+#         seq_len = input_ids.shape[1]
+
+#         if kv_cache is not None:
+#             space_needed = seq_len + max_gen_len
+#             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
+
+#         # Generate response only for questions
+#         if generate_response:
+#             past_key_values = greedy_generate(
+#                 model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
+#             )
 
 
 # unique stories 
@@ -173,7 +191,7 @@ def main(args):
     model_name_or_path = args.model_name_or_path
     model, tokenizer = load(model_name_or_path)
     #test_filepath = os.path.join(args.data_root, "questions_joined.jsonl")
-    test_filepath = os.path.join(args.data_root, "unique_story_sets_new.jsonl")
+    test_filepath = os.path.join(args.data_root, "A_test_story.jsonl")
     print(f"Loading data from {test_filepath} ...")
 
     # if not os.path.exists(test_filepath):
