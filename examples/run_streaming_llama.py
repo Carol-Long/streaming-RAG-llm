@@ -84,9 +84,11 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
     for idx, prompt in enumerate(prompts):
         if prompt[0:15] == "I will tell you":
             prompt = "USER: " + prompt 
-        if prompt[0:21] == "Can you please repeat":
+        # if prompt[0:21] == "Can you please repeat":
+        #     prompt = prompt + "\n\nASSISTANT: "
+        if prompt[0:4] == "Fill":
             prompt = prompt + "\n\nASSISTANT: "
-            
+
         print("\n" + prompt, end="")
         input_ids = tokenizer(prompt, return_tensors="pt").input_ids
         # print(tokenizer.decode(input_ids[0].tolist(), skip_special_tokens=False))
@@ -95,7 +97,7 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
         if kv_cache is not None:
             space_needed = seq_len + max_gen_len
             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
-        if prompt[-9:] == "Story 10.":       
+        if prompt[0:4]=="Fill":       
             past_key_values = greedy_generate(
                     model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
                 )
