@@ -60,45 +60,45 @@ def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
     print(" ".join(generated_text[pos:]), flush=True)
     return past_key_values
 
-def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
-    past_key_values = None
-    for idx, prompt in enumerate(prompts):
-        prompt = "USER: " + prompt + "\n\nASSISTANT: "
-        print("\n" + prompt, end="")
-        input_ids = tokenizer(prompt, return_tensors="pt").input_ids
-        input_ids = input_ids.to(model.device)
-        seq_len = input_ids.shape[1]
-        if kv_cache is not None:
-            space_needed = seq_len + max_gen_len
-            past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
-
-        past_key_values = greedy_generate(
-            model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
-        )
-
-
-# split into many questions version
-# @torch.no_grad()
 # def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
 #     past_key_values = None
 #     for idx, prompt in enumerate(prompts):
-#         if prompt[0:15] == "I will tell you":
-#             prompt = "USER: " + prompt 
-#         if prompt[0:21] == "Can you please repeat":
-#             prompt = prompt + "\n\nASSISTANT: "
-            
+#         prompt = "USER: " + prompt + "\n\nASSISTANT: "
 #         print("\n" + prompt, end="")
 #         input_ids = tokenizer(prompt, return_tensors="pt").input_ids
-#         # print(tokenizer.decode(input_ids[0].tolist(), skip_special_tokens=False))
 #         input_ids = input_ids.to(model.device)
 #         seq_len = input_ids.shape[1]
 #         if kv_cache is not None:
 #             space_needed = seq_len + max_gen_len
 #             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
-#         if prompt[0:21] == "Can you please repeat":       
-#             past_key_values = greedy_generate(
-#                     model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
-#                 )
+
+#         past_key_values = greedy_generate(
+#             model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
+#         )
+
+
+# split into many questions version
+@torch.no_grad()
+def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=100):
+    past_key_values = None
+    for idx, prompt in enumerate(prompts):
+        if prompt[0:15] == "I will tell you":
+            prompt = "USER: " + prompt 
+        if prompt[0:21] == "Can you please repeat":
+            prompt = prompt + "\n\nASSISTANT: "
+            
+        print("\n" + prompt, end="")
+        input_ids = tokenizer(prompt, return_tensors="pt").input_ids
+        # print(tokenizer.decode(input_ids[0].tolist(), skip_special_tokens=False))
+        input_ids = input_ids.to(model.device)
+        seq_len = input_ids.shape[1]
+        if kv_cache is not None:
+            space_needed = seq_len + max_gen_len
+            past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
+        if prompt[0:21] == "Can you please repeat":       
+            past_key_values = greedy_generate(
+                    model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
+                )
 
 # success. all in one question version
 # @torch.no_grad()
@@ -232,7 +232,7 @@ def main(args):
     model_name_or_path = args.model_name_or_path
     model, tokenizer = load(model_name_or_path)
     #test_filepath = os.path.join(args.data_root, "questions_joined.jsonl")
-    test_filepath = os.path.join(args.data_root, "test_bench.jsonl")
+    test_filepath = os.path.join(args.data_root, "A_test_story.jsonl")
     print(f"Loading data from {test_filepath} ...")
 
     # if not os.path.exists(test_filepath):
