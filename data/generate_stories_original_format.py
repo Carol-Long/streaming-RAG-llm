@@ -62,7 +62,7 @@ def generate_story_set(num_sets, num_stories=10):
         # Modified to create a list of turns with each story as a separate turn
         turns = []
         for i, story in enumerate(stories):
-            turns.append(f"Line {i + 1}: {story}")
+            turns.append(f"{story}")
         
         # Adding the follow-up question as a separate turn
         follow_up_question = f"Can you repeat the story about {main_character} I just told you about?"

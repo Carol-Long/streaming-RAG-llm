@@ -60,39 +60,39 @@ def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
     print(" ".join(generated_text[pos:]), flush=True)
     return past_key_values
 
+# unique stories in the original format
 @torch.no_grad()
-def streaming_inference(model, tokenizer, story_sets, kv_cache=None, max_gen_len=1000):
+def streaming_inference(model, tokenizer, story_sets, kv_cache=None, max_gen_len=500):
     past_key_values = None
 
-    for story_set in story_sets:
-        # Process each turn in the story set
-        for turn in story_set["turns"]:
-            # Check if the turn is a story or a question
-            if "repeat the story" in turn:
+    for idx, prompt in in enumerate(story_sets):
+        # Check if the turn is a story or a question
+        if "repeat the story" in prompt:
                 # This is the follow-up question
-                formatted_prompt = f"USER: {turn}\n\nASSISTANT: "
-                generate_response = True
-            else:
-                # This is a story line
-                formatted_prompt = f"Stories: {turn}"  # Non-question story lines
-                generate_response = False
+            formatted_prompt = f"USER: {prompt}\n\nASSISTANT: "
+            generate_response = True
+        else:
+            # This is a story line
+            formatted_prompt = f"Stories: {prompt}"  # Non-question story lines
+            generate_response = False
 
-            print("\n" + formatted_prompt, end="")
-            input_ids = tokenizer(formatted_prompt, return_tensors="pt").input_ids
-            input_ids = input_ids.to(model.device)
-            seq_len = input_ids.shape[1]
+        print("\n" + formatted_prompt, end="")
+        input_ids = tokenizer(formatted_prompt, return_tensors="pt").input_ids
+        input_ids = input_ids.to(model.device)
+        seq_len = input_ids.shape[1]
 
-            if kv_cache is not None:
-                space_needed = seq_len + max_gen_len
-                past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
+        if kv_cache is not None:
+            space_needed = seq_len + max_gen_len
+            past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
 
-            # Generate response only for questions
-            if generate_response:
-                past_key_values = greedy_generate(
-                    model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
-                )
+        # Generate response only for questions
+        if generate_response:
+            past_key_values = greedy_generate(
+                model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
+            )
 
 
+# unique stories 
 # @torch.no_grad()
 # def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
 #     past_key_values = None
