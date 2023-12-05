@@ -65,7 +65,7 @@ def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
 def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
     past_key_values = None
     for idx, prompt in enumerate(prompts):
-        if prompt[0:15] != "I will tell you":
+        if prompt[0:15] == "I will tell you":
             prompt = "USER: " + prompt 
         if prompt[0:21] == "Can you please repeat":
             prompt = prompt + "\n\nASSISTANT: "
