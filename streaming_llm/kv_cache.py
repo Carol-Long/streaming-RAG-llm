@@ -97,21 +97,19 @@ class StartRecentKVCache:
         for old_k, old_v in past_key_values:
             if old_k not in [new_k for new_k, _ in updated_key_values]:
                 evicted_data.append({"key": old_k.tolist(), "value": old_v.tolist()})
-                
+
         # Read existing data from the file, if it exists
-        evicted_file_path = "data/evicted_data.json"
+        evicted_file_path = "data/evicted_data.pt"
         try:
-            with open(evicted_file_path, "r") as existing_file:
-                existing_data = json.load(existing_file)
+            existing_data = torch.load(evicted_file_path)
         except FileNotFoundError:
             existing_data = []
 
         # Append new evicted data to the existing data
-        combined_data = existing_data + evicted_data
+        combined_data = existing_data + past_key_values
 
         # Save the combined data back to the file
-        with open(evicted_file_path, "w") as json_file:
-            json.dump(combined_data, json_file)
+        torch.save(combined_data, evicted_file_path)
         
         return updated_key_values
 

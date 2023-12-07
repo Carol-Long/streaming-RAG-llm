@@ -73,13 +73,13 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
 
         # read in evicted key_values from local file
-        evicted_file_path = "data/evicted_data.json"
+        evicted_file_path = "data/evicted_data.pt"
         try:
-            with open(evicted_file_path, "r") as existing_file:
-                evicted_data = json.load(existing_file)
+            evicted_data = torch.load(evicted_file_path)
         except FileNotFoundError:
-            evicted_data = []   
-        if past_key_values:     
+            evicted_data = []
+ 
+        if past_key_values:
             past_key_values += evicted_data
         else:
             past_key_values = evicted_data
