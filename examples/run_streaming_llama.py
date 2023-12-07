@@ -79,8 +79,10 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
                 evicted_data = json.load(existing_file)
         except FileNotFoundError:
             evicted_data = []   
-        if past_key_values:     
-            past_key_values += evicted_data
+        if past_key_values:
+            # Append each item from evicted_data to past_key_values
+            for item in evicted_data:
+                past_key_values.append(item)
         else:
             past_key_values = evicted_data
         past_key_values = greedy_generate(
