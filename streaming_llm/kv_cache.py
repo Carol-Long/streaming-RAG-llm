@@ -1,3 +1,4 @@
+import json
 import torch
 
 
@@ -69,7 +70,8 @@ class StartRecentKVCache:
         seq_len = past_key_values[0][0].size(self.k_seq_dim)
         if seq_len + num_coming <= self.cache_size:
             return past_key_values
-        return [
+        evicted_data = []
+        updated_key_values= [
             [
                 torch.cat(
                     [
@@ -92,6 +94,26 @@ class StartRecentKVCache:
             ]
             for k, v in past_key_values
         ]
+        for old_k, old_v in past_key_values:
+            if old_k not in [new_k for new_k, _ in updated_key_values]:
+                evicted_data.append({"key": old_k.tolist(), "value": old_v.tolist()})
+                
+        # Read existing data from the file, if it exists
+        evicted_file_path = "data/evicted_data.json"
+        try:
+            with open(evicted_file_path, "r") as existing_file:
+                existing_data = json.load(existing_file)
+        except FileNotFoundError:
+            existing_data = []
+
+        # Append new evicted data to the existing data
+        combined_data = existing_data + evicted_data
+
+        # Save the combined data back to the file
+        with open(evicted_file_path, "w") as json_file:
+            json.dump(combined_data, json_file)
+        
+        return updated_key_values
 
     def evict_range(self, past_key_values, start, end):
         if past_key_values is None:

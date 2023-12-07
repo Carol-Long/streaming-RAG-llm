@@ -72,6 +72,14 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
             space_needed = seq_len + max_gen_len
             past_key_values = kv_cache.evict_for_space(past_key_values, space_needed)
 
+        # read in evicted key_values from local file
+        evicted_file_path = "data/evicted_data.json"
+        try:
+            with open(evicted_file_path, "r") as existing_file:
+                evicted_data = json.load(existing_file)
+        except FileNotFoundError:
+            evicted_data = []        
+        past_key_values += evicted_data
         past_key_values = greedy_generate(
             model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
         )
