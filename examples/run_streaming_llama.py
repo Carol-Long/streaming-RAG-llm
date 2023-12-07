@@ -78,8 +78,11 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
             with open(evicted_file_path, "r") as existing_file:
                 evicted_data = json.load(existing_file)
         except FileNotFoundError:
-            evicted_data = []        
-        past_key_values += evicted_data
+            evicted_data = []   
+        if past_key_values:     
+            past_key_values += evicted_data
+        else:
+            past_key_values = evicted_data
         past_key_values = greedy_generate(
             model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
         )
