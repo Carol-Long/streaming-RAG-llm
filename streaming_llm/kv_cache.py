@@ -95,6 +95,11 @@ class StartRecentKVCache:
             for k, v in past_key_values
         ]
         for old_k, old_v in past_key_values:
+
+            # debugging code
+            k_start = self.k_slice(old_k, 0, self.start_size)
+            k_end = self.k_slice(old_k, seq_len - self.recent_size + num_coming, seq_len)
+            print(f"Shapes of k slices: {k_start.shape}, {k_end.shape}")
             if old_k not in [new_k for new_k, _ in updated_key_values]:
                 evicted_data.append({"key": old_k.tolist(), "value": old_v.tolist()})
 
