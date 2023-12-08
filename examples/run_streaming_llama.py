@@ -83,8 +83,8 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
         print(past_key_values)
  
         if past_key_values:
-                if isinstance(past_key_values, tuple):
-                    past_key_values = list(past_key_values)
+            if isinstance(past_key_values, tuple):
+                past_key_values = list(past_key_values)
             past_key_values += evicted_data
         past_key_values = greedy_generate(
             model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
