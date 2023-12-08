@@ -124,7 +124,7 @@ class StartRecentKVCache:
             existing_data_kv = existing_data['data']
             existing_data_indices = existing_data['indices']
         except FileNotFoundError:
-            existing_data = []
+            existing_data_kv  = []
 
         # Append new evicted data to the existing data
         combined_data = existing_data_kv + evicted_data
