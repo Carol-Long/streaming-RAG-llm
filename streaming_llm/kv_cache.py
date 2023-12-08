@@ -121,11 +121,13 @@ class StartRecentKVCache:
         evicted_file_path = "data/evicted_data.pt"
         try:
             existing_data = torch.load(evicted_file_path)
+            existing_data_kv = existing_data['data']
+            existing_data_indices = existing_data['indices']
         except FileNotFoundError:
             existing_data = []
 
         # Append new evicted data to the existing data
-        combined_data = existing_data + evicted_data
+        combined_data = existing_data_kv + evicted_data
 
         evicted_package = {'data': combined_data, 'indices': evicted_indices}
 
