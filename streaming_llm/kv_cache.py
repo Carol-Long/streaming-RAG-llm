@@ -130,7 +130,7 @@ class StartRecentKVCache:
         evicted_package = {'data': combined_data, 'indices': evicted_indices}
 
         # Save the combined data back to the file
-        torch.save(combined_data, evicted_file_path)
+        torch.save(evicted_package, evicted_file_path)
         
         return updated_key_values
 
