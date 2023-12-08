@@ -70,7 +70,6 @@ class StartRecentKVCache:
         seq_len = past_key_values[0][0].size(self.k_seq_dim)
         if seq_len + num_coming <= self.cache_size:
             return past_key_values
-        evicted_data = []
         updated_key_values= [
             [
                 torch.cat(
@@ -94,14 +93,24 @@ class StartRecentKVCache:
             ]
             for k, v in past_key_values
         ]
-        for old_k, old_v in past_key_values:
 
-            # debugging code
-            k_start = self.k_slice(old_k, 0, self.start_size)
-            k_end = self.k_slice(old_k, seq_len - self.recent_size + num_coming, seq_len)
-            print(f"Shapes of k slices: {k_start.shape}, {k_end.shape}")
-            if old_k not in [new_k for new_k, _ in updated_key_values]:
-                evicted_data.append({"key": old_k.tolist(), "value": old_v.tolist()})
+        evicted_data= [
+            [
+                torch.cat(
+                    [
+                        self.k_slice(k, self.start_size, seq_len - self.recent_size + num_coming)
+                    ],
+                    dim=self.k_seq_dim,
+                ),
+                torch.cat(
+                    [
+                        self.v_slice(v, self.start_size, seq_len - self.recent_size + num_coming)
+                    ],
+                    dim=self.v_seq_dim,
+                ),
+            ]
+            for k, v in past_key_values
+        ]
 
         # Read existing data from the file, if it exists
         evicted_file_path = "data/evicted_data.pt"
@@ -111,7 +120,7 @@ class StartRecentKVCache:
             existing_data = []
 
         # Append new evicted data to the existing data
-        combined_data = existing_data + past_key_values
+        combined_data = existing_data + evicted_data
 
         # Save the combined data back to the file
         torch.save(combined_data, evicted_file_path)
