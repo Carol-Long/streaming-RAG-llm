@@ -111,6 +111,11 @@ class StartRecentKVCache:
             ]
             for k, v in past_key_values
         ]
+         # Track indices of evicted KV pairs
+        evicted_indices = []
+        for idx, (original_kv, updated_kv) in enumerate(zip(past_key_values, updated_key_values)):
+            if original_kv != updated_kv:  # Assuming a valid comparison logic
+                evicted_indices.append(idx)
 
         # Read existing data from the file, if it exists
         evicted_file_path = "data/evicted_data.pt"
@@ -121,6 +126,8 @@ class StartRecentKVCache:
 
         # Append new evicted data to the existing data
         combined_data = existing_data + evicted_data
+
+        evicted_package = {'data': combined_data, 'indices': evicted_indices}
 
         # Save the combined data back to the file
         torch.save(combined_data, evicted_file_path)
