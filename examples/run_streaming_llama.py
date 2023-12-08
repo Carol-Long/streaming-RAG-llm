@@ -76,11 +76,8 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
         evicted_file_path = "data/evicted_data.pt"
         try:
             evicted_data = torch.load(evicted_file_path)
-            print("Evicted data:", evicted_data)
         except FileNotFoundError:
             evicted_data = []
-        
-        print(past_key_values)
  
         if past_key_values:
             if isinstance(past_key_values, tuple):
