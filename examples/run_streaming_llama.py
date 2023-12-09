@@ -89,10 +89,10 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
             print(len(past_key_values[0])) #2
             print(past_key_values[0][0].size()) #torch.Size([1, 40, 71, 128])
             if evicted_data != []:
-                print(len(evicted_data)) #
-                print(len(evicted_data[0])) #
-                print(evicted_data[0][0].size()) #
-                print(past_key_values.dtype)
+                print(len(evicted_data)) # 40
+                print(len(evicted_data[0])) # 2
+                print(evicted_data[0][0].size()) #torch.Size([1, 40, 16, 128])
+                #print(past_key_values.dtype) # List
                 print(evicted_data.dtype)
                 past_key_values= past_key_values[:4] + evicted_data + past_key_values[4:]
 
