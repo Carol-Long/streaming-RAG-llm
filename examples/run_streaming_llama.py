@@ -75,20 +75,21 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
         # read in evicted key_values from local file
         evicted_file_path = "data/evicted_data.pt"
         try:
-            #evicted_data = torch.load(evicted_file_path)
-            evicted_package = torch.load(evicted_file_path)
-            evicted_data = evicted_package['data']
-            evicted_indices = evicted_package['indices']
+            evicted_data = torch.load(evicted_file_path)
+            # evicted_package = torch.load(evicted_file_path)
+            # evicted_data = evicted_package['data']
+            # evicted_indices = evicted_package['indices']
         except FileNotFoundError:
             evicted_data = []
-            evicted_indices = []
+            # evicted_indices = []
 
         if past_key_values:
-            for idx, kv_pair in zip(evicted_indices, evicted_data):
-                if idx < len(past_key_values):
-                    past_key_values[idx] = kv_pair
-                else:
-                    past_key_values.append(kv_pair)
+            updated_key_values= updated_key_values[: 4] + evicted_data + updated_key_values[4:]
+            # for idx, kv_pair in zip(evicted_indices, evicted_data):
+            #     if idx < len(past_key_values):
+            #         past_key_values[idx] = kv_pair
+            #     else:
+            #         past_key_values.append(kv_pair)
                     
         # if past_key_values:
         #     if isinstance(past_key_values, tuple):
