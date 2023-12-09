@@ -84,7 +84,7 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
             # evicted_indices = []
 
         if past_key_values:
-            updated_key_values= updated_key_values[: 4] + evicted_data + updated_key_values[4:]
+            past_key_values= past_key_values[: 4] + evicted_data + past_key_values[4:]
             # for idx, kv_pair in zip(evicted_indices, evicted_data):
             #     if idx < len(past_key_values):
             #         past_key_values[idx] = kv_pair
