@@ -85,16 +85,17 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
             # evicted_indices = []
 
         if past_key_values:
-            print(len(past_key_values))
-            print(len(past_key_values[0]))
-            print(past_key_values[0][0].size())
-            print(len(evicted_data))
-            print(len(evicted_data[0]))
-            print(evicted_data[0][0].size())
+            print(len(past_key_values)) # 40
+            print(len(past_key_values[0])) #2
+            print(past_key_values[0][0].size()) #torch.Size([1, 40, 71, 128])
+            if evicted_data != []:
+                print(len(evicted_data)) #
+                print(len(evicted_data[0])) #
+                print(evicted_data[0][0].size()) #
             past_key_values= past_key_values[:4] + evicted_data + past_key_values[4:]
-            print(len(past_key_values))
-            print(len(past_key_values[0]))
-            print(past_key_values[0][0].size())
+            print(len(past_key_values)) #
+            print(len(past_key_values[0])) #
+            print(past_key_values[0][0].size()) #
             # for idx, kv_pair in zip(evicted_indices, evicted_data):
             #     if idx < len(past_key_values):
             #         past_key_values[idx] = kv_pair
