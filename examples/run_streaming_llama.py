@@ -83,19 +83,19 @@ def aggregate_representation(kv_pairs):
     """Aggregate the representations in KV pairs by taking the mean along the token dimension."""
     aggregated_kv_pairs = []
     for i, kv_pair in enumerate(kv_pairs):
-        try:
-            if len(kv_pair) != 2:
-                print(f"Skipping element {i} in kv_pairs: expected 2 items, got {len(kv_pair)}")
-                continue
-
+        # Check if kv_pair is a tuple/list of two tensors
+        if isinstance(kv_pair, (tuple, list)) and len(kv_pair) == 2:
             key_tensor, value_tensor = kv_pair
-            mean_key = key_tensor.mean(dim=2)  # Aggregate over the token dimension
-            mean_value = value_tensor.mean(dim=2)
-            aggregated_kv_pairs.append((mean_key, mean_value))
-
-        except Exception as e:
-            print(f"Error processing element {i} in kv_pairs: {e}")
+        # If kv_pair is a single tensor, treat it as both key and value
+        elif torch.is_tensor(kv_pair):
+            key_tensor, value_tensor = kv_pair, kv_pair
+        else:
+            print(f"Skipping element {i} in kv_pairs: Unexpected format.")
             continue
+
+        mean_key = key_tensor.mean(dim=2)
+        mean_value = value_tensor.mean(dim=2)
+        aggregated_kv_pairs.append((mean_key, mean_value))
 
     return aggregated_kv_pairs
 
