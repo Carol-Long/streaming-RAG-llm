@@ -128,7 +128,7 @@ def find_top_similar_kv_sets(current_kv_sets, evicted_data_sets, top_k=3):
             similarity = calculate_kv_sets_similarity(aggregated_current_kv, aggregated_evicted_kv)
             similarity_scores.append((evicted_kv_set, similarity))
         else:
-            print(f"Skipping invalid KV set structure: {evicted_kv_set}")
+            #print(f"Skipping invalid KV set structure: {evicted_kv_set}")
 
     # Avoid division by zero
     if not similarity_scores:
