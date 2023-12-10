@@ -64,6 +64,7 @@ def greedy_generate(model, tokenizer, input_ids, past_key_values, max_gen_len):
 # Reconcatenate the evicted data
 def reintegrate_evicted_data(past_key_values, evicted_data, start_idx):
     reintegrated_kv = []
+    print("evicted_data: ", evicted_data)
 
     for layer_idx in range(len(past_key_values)):
         # Extracting the keys and values for both original and evicted data
