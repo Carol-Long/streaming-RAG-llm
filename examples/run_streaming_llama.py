@@ -172,7 +172,6 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
 
         if past_key_values:
             if evicted_data != []:
-
                 # Assuming you have past_key_values and evicted_data defined
                 top_kv_sets = calculate_and_retrieve_top_slices_dot_product(past_key_values, evicted_data, 20)
 
@@ -257,7 +256,6 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
 #             past_key_values = greedy_generate(
 #                 model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
 #             )
-
 
 # unique stories 
 # @torch.no_grad()
