@@ -206,7 +206,7 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
         if past_key_values:
             if evicted_data != []:
                 # Assuming you have past_key_values and evicted_data defined
-                top_kv_sets = calculate_and_retrieve_top_slices_cosine_similarity(past_key_values, evicted_data, 0)
+                top_kv_sets = calculate_and_retrieve_top_slices_cosine_similarity(past_key_values, evicted_data, 20)
 
                 # insert my evicted_data into correct part of the code
                 past_key_values = reintegrate_evicted_data(past_key_values, top_kv_sets, 4)
