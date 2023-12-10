@@ -83,6 +83,8 @@ def aggregate_representation(kv_pairs):
     """Aggregate the representations in KV pairs by taking the mean along the token dimension."""
     aggregated_kv_pairs = []
     for key_tensor, value_tensor in kv_pairs:
+        print(key_tensor.shape)
+        print(value_tensor.shape)
         mean_key = key_tensor.mean(dim=2) # aggregate over the dimension mismatch loc
         mean_value = value_tensor.mean(dim=2)
         aggregated_kv_pairs.append((mean_key, mean_value))
