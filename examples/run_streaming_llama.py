@@ -80,7 +80,7 @@ def reintegrate_evicted_data(past_key_values, evicted_data, start_idx):
 
     return reintegrated_kv
 
-def calculate_and_retrieve_top_slices(current_kv_sets, evicted_data_sets, top_k=5):
+def calculate_and_retrieve_top_slices(current_kv_sets, evicted_data_sets, top_k):
     top_slices = []
 
     # Iterate over each set in evicted_data_sets
@@ -140,7 +140,7 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
             if evicted_data != []:
 
                 # Assuming you have past_key_values and evicted_data defined
-                top_kv_sets = calculate_and_retrieve_top_slices(past_key_values, evicted_data, top_k=5)
+                top_kv_sets = calculate_and_retrieve_top_slices(past_key_values, evicted_data, 30)
 
                 # insert my evicted_data into correct part of the code
                 past_key_values = reintegrate_evicted_data(past_key_values, top_kv_sets, 4)
