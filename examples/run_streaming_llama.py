@@ -90,7 +90,9 @@ def calculate_and_retrieve_top_slices(current_kv_sets, evicted_data_sets, top_k=
             for token_pos in range(evicted_kv_pair[0].size(2)):
                 # Add an extra dimension to the evicted_kv_pair tensors for comparison
                 evicted_k = evicted_kv_pair[0][:, :, token_pos, :].unsqueeze(2)
+                print(evicted_k.size())
                 evicted_v = evicted_kv_pair[1][:, :, token_pos, :].unsqueeze(2)
+                print(evicted_v.size())
 
                 k_similarity = torch.cosine_similarity(current_kv_pair[0], evicted_k, dim=-1).mean()
                 v_similarity = torch.cosine_similarity(current_kv_pair[1], evicted_v, dim=-1).mean()
