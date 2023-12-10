@@ -121,6 +121,7 @@ def find_top_similar_kv_sets(current_kv_sets, evicted_data_sets, top_k=3):
 
     # Aggregate the representations in the current KV pairs
     aggregated_current_kv = aggregate_representation(current_kv_sets)
+    print(aggregated_current_kv)
 
     for evicted_kv_set in evicted_data_sets:
         # Make sure we are passing a list of KV pairs to aggregate_representation
