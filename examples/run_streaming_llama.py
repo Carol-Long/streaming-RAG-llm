@@ -1,5 +1,6 @@
 import warnings
 import numpy as np
+import heapq
 
 warnings.filterwarnings("ignore")
 
@@ -79,70 +80,31 @@ def reintegrate_evicted_data(past_key_values, evicted_data, start_idx):
 
     return reintegrated_kv
 
-# addressing the size mismatch issue
-def aggregate_representation(kv_pairs):
-    """Aggregate the representations in KV pairs by taking the mean along the token dimension."""
-    aggregated_kv_pairs = []
-    for i, kv_pair in enumerate(kv_pairs):
-        # Check if kv_pair is a tuple/list of two tensors
-        if isinstance(kv_pair, (tuple, list)) and len(kv_pair) == 2:
-            key_tensor, value_tensor = kv_pair
-        # If kv_pair is a single tensor, treat it as both key and value
-        elif torch.is_tensor(kv_pair):
-            key_tensor, value_tensor = kv_pair, kv_pair
-        else:
-            print(f"Skipping element {i} in kv_pairs: Unexpected format.")
-            continue
+def calculate_and_retrieve_top_slices(current_kv_sets, evicted_data_sets, top_k=5):
+    top_slices = []
 
-        mean_key = key_tensor.mean(dim=2)
-        mean_value = value_tensor.mean(dim=2)
-        aggregated_kv_pairs.append((mean_key, mean_value))
+    for current_kv_pair in current_kv_sets:
+        # Priority queue to store top similarities (min heap, hence using negative similarity)
+        top_similarities = []
 
-    return aggregated_kv_pairs
+        for evicted_kv_pair in evicted_data_sets:
+            for token_pos in range(evicted_kv_pair[0].size(2)):
+                k_similarity = torch.cosine_similarity(current_kv_pair[0][:, :, :, :], evicted_kv_pair[0][:, :, token_pos, :], dim=-1).mean()
+                v_similarity = torch.cosine_similarity(current_kv_pair[1][:, :, :, :], evicted_kv_pair[1][:, :, token_pos, :], dim=-1).mean()
+                avg_similarity = (k_similarity + v_similarity) / 2
 
+                # Use negative similarity because heapq is a min heap
+                if len(top_similarities) < top_k:
+                    heapq.heappush(top_similarities, (-avg_similarity, token_pos))
+                else:
+                    heapq.heappushpop(top_similarities, (-avg_similarity, token_pos))
 
-# calculate pairwise kv similarity
-def calculate_kv_sets_similarity(aggregated_kv_set1, aggregated_kv_set2):
-    """Calculate the average cosine similarity between two sets of aggregated KV pairs."""
-    total_similarity = 0.0
-    num_pairs = min(len(aggregated_kv_set1), len(aggregated_kv_set2))
+        # Retrieve the top k slices based on the recorded token positions
+        top_positions = [pos for _, pos in sorted(top_similarities, reverse=True)]
+        top_kv_slices = [(evicted_kv_pair[0][:, :, top_positions, :], evicted_kv_pair[1][:, :, top_positions, :]) for evicted_kv_pair in evicted_data_sets]
+        top_slices.append(top_kv_slices)
 
-    for i in range(num_pairs):
-        k_similarity = torch.cosine_similarity(aggregated_kv_set1[i][0], aggregated_kv_set2[i][0], dim=-1).mean()
-        v_similarity = torch.cosine_similarity(aggregated_kv_set1[i][1], aggregated_kv_set2[i][1], dim=-1).mean()
-        total_similarity += (k_similarity + v_similarity) / 2
-
-    return total_similarity / num_pairs
-
-
-def find_top_similar_kv_sets(current_kv_sets, evicted_data_sets, top_k=3):
-    """Find the top_k most similar sets of KV pairs from the evicted data."""
-    similarity_scores = []
-
-    # Aggregate the representations in the current KV pairs
-    aggregated_current_kv = aggregate_representation(current_kv_sets)
-
-    for evicted_kv_set in evicted_data_sets:
-        # Make sure we are passing a list of KV pairs to aggregate_representation
-        if isinstance(evicted_kv_set, list) and all(len(kv_pair) == 2 for kv_pair in evicted_kv_set):
-            aggregated_evicted_kv = aggregate_representation(evicted_kv_set)
-            print(len(aggregated_evicted_kv))
-            print(len(aggregated_evicted_kv[0]))
-            print(aggregated_evicted_kv[0][0].size())
-            similarity = calculate_kv_sets_similarity(aggregated_current_kv, aggregated_evicted_kv)
-            similarity_scores.append((evicted_kv_set, similarity))
-
-    # Avoid division by zero
-    if not similarity_scores:
-        return []
-
-    # Sort by similarity score and select the top_k sets
-    top_similar_kv_sets = sorted(similarity_scores, key=lambda x: x[1], reverse=True)[:top_k]
-
-    return [set_ for set_, _ in top_similar_kv_sets]
-
-
-
+    return top_slices
 
 
 def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
@@ -168,7 +130,7 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
             if evicted_data != []:
 
                 # Assuming you have past_key_values and evicted_data defined
-                top_kv_sets = find_top_similar_kv_sets(past_key_values, evicted_data, top_k=3)
+                top_kv_sets = calculate_and_retrieve_top_slices(past_key_values, evicted_data, top_k=5)
 
                 # insert my evicted_data into correct part of the code
                 past_key_values = reintegrate_evicted_data(past_key_values, top_kv_sets, 4)
