@@ -103,27 +103,20 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
             # evicted_indices = []
 
         if past_key_values:
-            print(len(past_key_values)) # 40
-            print(len(past_key_values[0])) #2
-            print(past_key_values[0][0].size()) #torch.Size([1, 40, 71, 128])
+            # print(len(past_key_values)) # 40
+            # print(len(past_key_values[0])) #2
+            # print(past_key_values[0][0].size()) #torch.Size([1, 40, 71, 128])
             if evicted_data != []:
                 #print(past_key_values.dtype) # List
                 #print(evicted_data.dtype)
                 #past_key_values= past_key_values[:4] + evicted_data + past_key_values[4:]
                 past_key_values = reintegrate_evicted_data(past_key_values, evicted_data, 4)
-                print(len(past_key_values)) 
-                print(len(past_key_values[0])) 
-                print(past_key_values[0][0].size()) 
             # for idx, kv_pair in zip(evicted_indices, evicted_data):
             #     if idx < len(past_key_values):
             #         past_key_values[idx] = kv_pair
             #     else:
             #         past_key_values.append(kv_pair)
                     
-        # if past_key_values:
-        #     if isinstance(past_key_values, tuple):
-        #         past_key_values = list(past_key_values)
-        #     past_key_values += evicted_data
         past_key_values = greedy_generate(
             model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
         )
