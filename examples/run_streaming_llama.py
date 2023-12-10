@@ -78,6 +78,35 @@ def reintegrate_evicted_data(past_key_values, evicted_data, start_idx):
 
     return reintegrated_kv
 
+# calculate pairwise kv similarity
+def calculate_kv_sets_similarity(kv_set1, kv_set2):
+    """Calculate the average cosine similarity between two sets of KV pairs."""
+    total_similarity = 0.0
+    num_pairs = min(len(kv_set1), len(kv_set2))
+
+    for i in range(num_pairs):
+        k_similarity = torch.cosine_similarity(kv_set1[i][0], kv_set2[i][0], dim=-1).mean()
+        v_similarity = torch.cosine_similarity(kv_set1[i][1], kv_set2[i][1], dim=-1).mean()
+        total_similarity += (k_similarity + v_similarity) / 2
+
+    return total_similarity / num_pairs  # Return the average similarity
+
+def find_top_similar_kv_sets(current_kv_sets, evicted_data_sets, top_k=3):
+    """Find the top_k most similar sets of KV pairs from the evicted data."""
+    similarity_scores = []
+
+    # Calculate similarity for each set in the evicted data
+    for evicted_kv_set in evicted_data_sets:
+        similarity = calculate_kv_sets_similarity(current_kv_sets, evicted_kv_set)
+        similarity_scores.append((evicted_kv_set, similarity))
+
+    # Sort by similarity score and select the top_k sets
+    top_similar_kv_sets = sorted(similarity_scores, key=lambda x: x[1], reverse=True)[:top_k]
+
+    return [set_ for set_, _ in top_similar_kv_sets]
+
+
+
 
 def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
     past_key_values = None
@@ -95,27 +124,16 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
         evicted_file_path = "data/evicted_data.pt"
         try:
             evicted_data = torch.load(evicted_file_path)
-            # evicted_package = torch.load(evicted_file_path)
-            # evicted_data = evicted_package['data']
-            # evicted_indices = evicted_package['indices']
         except FileNotFoundError:
             evicted_data = []
-            # evicted_indices = []
 
         if past_key_values:
-            # print(len(past_key_values)) # 40
-            # print(len(past_key_values[0])) #2
-            # print(past_key_values[0][0].size()) #torch.Size([1, 40, 71, 128])
             if evicted_data != []:
-                #print(past_key_values.dtype) # List
-                #print(evicted_data.dtype)
-                #past_key_values= past_key_values[:4] + evicted_data + past_key_values[4:]
-                past_key_values = reintegrate_evicted_data(past_key_values, evicted_data, 4)
-            # for idx, kv_pair in zip(evicted_indices, evicted_data):
-            #     if idx < len(past_key_values):
-            #         past_key_values[idx] = kv_pair
-            #     else:
-            #         past_key_values.append(kv_pair)
+                # Assuming you have past_key_values and evicted_data defined
+                top_kv_sets = find_top_similar_kv_sets(past_key_values, evicted_data, top_k=3)
+
+                # insert my evicted_data into correct part of the code
+                past_key_values = reintegrate_evicted_data(past_key_values, top_kv_sets, 4)
                     
         past_key_values = greedy_generate(
             model, tokenizer, input_ids, past_key_values, max_gen_len=max_gen_len
