@@ -84,27 +84,29 @@ def calculate_and_retrieve_top_slices(current_kv_sets, evicted_data_sets, top_k=
     top_slices = []
 
     for current_kv_pair in current_kv_sets:
-        # Priority queue to store top similarities (min heap, hence using negative similarity)
         top_similarities = []
 
         for evicted_kv_pair in evicted_data_sets:
             for token_pos in range(evicted_kv_pair[0].size(2)):
-                k_similarity = torch.cosine_similarity(current_kv_pair[0][:, :, :, :], evicted_kv_pair[0][:, :, token_pos, :], dim=-1).mean()
-                v_similarity = torch.cosine_similarity(current_kv_pair[1][:, :, :, :], evicted_kv_pair[1][:, :, token_pos, :], dim=-1).mean()
+                # Add an extra dimension to the evicted_kv_pair tensors for comparison
+                evicted_k = evicted_kv_pair[0][:, :, token_pos, :].unsqueeze(2)
+                evicted_v = evicted_kv_pair[1][:, :, token_pos, :].unsqueeze(2)
+
+                k_similarity = torch.cosine_similarity(current_kv_pair[0], evicted_k, dim=-1).mean()
+                v_similarity = torch.cosine_similarity(current_kv_pair[1], evicted_v, dim=-1).mean()
                 avg_similarity = (k_similarity + v_similarity) / 2
 
-                # Use negative similarity because heapq is a min heap
                 if len(top_similarities) < top_k:
                     heapq.heappush(top_similarities, (-avg_similarity, token_pos))
                 else:
                     heapq.heappushpop(top_similarities, (-avg_similarity, token_pos))
 
-        # Retrieve the top k slices based on the recorded token positions
         top_positions = [pos for _, pos in sorted(top_similarities, reverse=True)]
         top_kv_slices = [(evicted_kv_pair[0][:, :, top_positions, :], evicted_kv_pair[1][:, :, top_positions, :]) for evicted_kv_pair in evicted_data_sets]
         top_slices.append(top_kv_slices)
 
     return top_slices
+
 
 
 def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
