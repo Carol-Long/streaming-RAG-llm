@@ -153,6 +153,15 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
 
         if past_key_values:
             if evicted_data != []:
+
+                print("Inspecting evicted data structure:")
+                for i, item in enumerate(evicted_data):
+                    print(f"Element {i}: Length - {len(item)}, Type - {type(item)}")
+
+                print("\nInspecting past key values structure:")
+                for i, item in enumerate(past_key_values):
+                    print(f"Element {i}: Length - {len(item)}, Type - {type(item)}")
+
                 # Assuming you have past_key_values and evicted_data defined
                 top_kv_sets = find_top_similar_kv_sets(past_key_values, evicted_data, top_k=3)
 
