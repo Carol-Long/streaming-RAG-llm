@@ -116,7 +116,7 @@ def reintegrate_evicted_data(past_key_values, evicted_data, start_idx):
 
 #     return top_slices
 
-def calculate_and_retrieve_top_slices_dot_product(current_kv_sets, evicted_data_sets, top_k):
+def calculate_and_retrieve_top_slices_cosine_similarity(current_kv_sets, evicted_data_sets, top_k):
     top_slices = []
 
     # Aggregate current_kv_sets
@@ -131,14 +131,13 @@ def calculate_and_retrieve_top_slices_dot_product(current_kv_sets, evicted_data_
             evicted_v = evicted_kv_pair[1][:, :, token_pos, :].squeeze(2)
 
             # Calculate dot product for k and v, and take the average
-            k_dot_product = torch.sum(aggregated_current_k * evicted_k, dim=-1)
-            v_dot_product = torch.sum(aggregated_current_v * evicted_v, dim=-1)
-            avg_dot_product = (k_dot_product + v_dot_product) / 2
+            k_similarity = torch.cosine_similarity(aggregated_current_k, evicted_k, dim=-1)
+            v_similarity = torch.cosine_similarity(aggregated_current_v, evicted_v, dim=-1)
+            avg_similarity = (k_similarity + v_similarity) / 2
 
             # Convert avg_dot_product to a single scalar value
-            avg_similarity_score = avg_dot_product.mean().item()  # Taking mean and converting to Python scalar
+            avg_similarity_score = avg_similarity.mean().item()
 
-            # Use negative similarity because heapq is a min heap
             if len(top_similarities) < top_k:
                 heapq.heappush(top_similarities, (-avg_similarity_score, token_pos))
             else:
@@ -150,6 +149,40 @@ def calculate_and_retrieve_top_slices_dot_product(current_kv_sets, evicted_data_
         top_slices.extend(top_kv_slices)
 
     return top_slices
+
+def calculate_and_retrieve_top_slices_dot_product(current_kv_sets, evicted_data_sets, top_k):
+    top_slices = []
+
+    # Aggregate current_kv_sets
+    # aggregated_current_k = torch.mean(torch.cat([kv[0] for kv in current_kv_sets], dim=2), dim=2)
+    # aggregated_current_v = torch.mean(torch.cat([kv[1] for kv in current_kv_sets], dim=2), dim=2)
+
+    # for evicted_kv_pair in evicted_data_sets:
+    #     top_similarities = []
+
+    #     for token_pos in range(evicted_kv_pair[0].size(2)):
+    #         evicted_k = evicted_kv_pair[0][:, :, token_pos, :].squeeze(2)
+    #         evicted_v = evicted_kv_pair[1][:, :, token_pos, :].squeeze(2)
+
+    #         # Calculate dot product for k and v, and take the average
+    #         k_dot_product = torch.sum(aggregated_current_k * evicted_k, dim=-1)
+    #         v_dot_product = torch.sum(aggregated_current_v * evicted_v, dim=-1)
+    #         avg_dot_product = (k_dot_product + v_dot_product) / 2
+
+    #         # Convert avg_dot_product to a single scalar value
+    #         avg_similarity_score = avg_dot_product.mean().item()
+
+    #         if len(top_similarities) < top_k:
+    #             heapq.heappush(top_similarities, (-avg_similarity_score, token_pos))
+    #         else:
+    #             heapq.heappushpop(top_similarities, (-avg_similarity_score, token_pos))
+
+
+    #     top_positions = [pos for _, pos in sorted(top_similarities, reverse=True)]
+    #     top_kv_slices = [(evicted_kv_pair[0][:, :, top_positions, :], evicted_kv_pair[1][:, :, top_positions, :])]
+    #     top_slices.extend(top_kv_slices)
+
+    # return top_slices
 
 def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=1000):
     past_key_values = None
@@ -173,7 +206,7 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
         if past_key_values:
             if evicted_data != []:
                 # Assuming you have past_key_values and evicted_data defined
-                top_kv_sets = calculate_and_retrieve_top_slices_dot_product(past_key_values, evicted_data, 0)
+                top_kv_sets = calculate_and_retrieve_top_slices_cosine_similarity(past_key_values, evicted_data, 0)
 
                 # insert my evicted_data into correct part of the code
                 past_key_values = reintegrate_evicted_data(past_key_values, top_kv_sets, 4)
