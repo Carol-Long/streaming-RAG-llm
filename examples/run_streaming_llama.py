@@ -78,26 +78,38 @@ def reintegrate_evicted_data(past_key_values, evicted_data, start_idx):
 
     return reintegrated_kv
 
+# addressing the size mismatch issue
+def aggregate_representation(kv_pairs):
+    """Aggregate the representations in KV pairs by taking the mean along the token dimension."""
+    aggregated_kv_pairs = []
+    for key_tensor, value_tensor in kv_pairs:
+        mean_key = key_tensor.mean(dim=2) # aggregate over the dimension mismatch loc
+        mean_value = value_tensor.mean(dim=2)
+        aggregated_kv_pairs.append((mean_key, mean_value))
+    return aggregated_kv_pairs
+
 # calculate pairwise kv similarity
-def calculate_kv_sets_similarity(kv_set1, kv_set2):
-    """Calculate the average cosine similarity between two sets of KV pairs."""
+def calculate_kv_sets_similarity(aggregated_kv_set1, aggregated_kv_set2):
+    """Calculate the average cosine similarity between two sets of aggregated KV pairs."""
     total_similarity = 0.0
-    num_pairs = min(len(kv_set1), len(kv_set2))
+    num_pairs = min(len(aggregated_kv_set1), len(aggregated_kv_set2))
 
     for i in range(num_pairs):
-        k_similarity = torch.cosine_similarity(kv_set1[i][0], kv_set2[i][0], dim=-1).mean()
-        v_similarity = torch.cosine_similarity(kv_set1[i][1], kv_set2[i][1], dim=-1).mean()
+        k_similarity = torch.cosine_similarity(aggregated_kv_set1[i][0], aggregated_kv_set2[i][0], dim=-1).mean()
+        v_similarity = torch.cosine_similarity(aggregated_kv_set1[i][1], aggregated_kv_set2[i][1], dim=-1).mean()
         total_similarity += (k_similarity + v_similarity) / 2
 
-    return total_similarity / num_pairs  # Return the average similarity
+    return total_similarity / num_pairs
+
 
 def find_top_similar_kv_sets(current_kv_sets, evicted_data_sets, top_k=3):
     """Find the top_k most similar sets of KV pairs from the evicted data."""
     similarity_scores = []
+    aggregated_current_kv = aggregate_representation(current_kv_sets)
 
-    # Calculate similarity for each set in the evicted data
     for evicted_kv_set in evicted_data_sets:
-        similarity = calculate_kv_sets_similarity(current_kv_sets, evicted_kv_set)
+        aggregated_evicted_kv = aggregate_representation(evicted_kv_set)
+        similarity = calculate_kv_sets_similarity(aggregated_current_kv, aggregated_evicted_kv)
         similarity_scores.append((evicted_kv_set, similarity))
 
     # Sort by similarity score and select the top_k sets
