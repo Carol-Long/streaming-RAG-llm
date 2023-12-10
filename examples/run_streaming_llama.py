@@ -82,13 +82,23 @@ def reintegrate_evicted_data(past_key_values, evicted_data, start_idx):
 def aggregate_representation(kv_pairs):
     """Aggregate the representations in KV pairs by taking the mean along the token dimension."""
     aggregated_kv_pairs = []
-    for key_tensor, value_tensor in kv_pairs:
-        print(key_tensor.shape)
-        print(value_tensor.shape)
-        mean_key = key_tensor.mean(dim=2) # aggregate over the dimension mismatch loc
-        mean_value = value_tensor.mean(dim=2)
-        aggregated_kv_pairs.append((mean_key, mean_value))
+    for i, kv_pair in enumerate(kv_pairs):
+        try:
+            if len(kv_pair) != 2:
+                print(f"Skipping element {i} in kv_pairs: expected 2 items, got {len(kv_pair)}")
+                continue
+
+            key_tensor, value_tensor = kv_pair
+            mean_key = key_tensor.mean(dim=2)  # Aggregate over the token dimension
+            mean_value = value_tensor.mean(dim=2)
+            aggregated_kv_pairs.append((mean_key, mean_value))
+
+        except Exception as e:
+            print(f"Error processing element {i} in kv_pairs: {e}")
+            continue
+
     return aggregated_kv_pairs
+
 
 # calculate pairwise kv similarity
 def calculate_kv_sets_similarity(aggregated_kv_set1, aggregated_kv_set2):
