@@ -135,11 +135,15 @@ def calculate_and_retrieve_top_slices_dot_product(current_kv_sets, evicted_data_
             v_dot_product = torch.sum(aggregated_current_v * evicted_v, dim=-1)
             avg_dot_product = (k_dot_product + v_dot_product) / 2
 
-            # Use negative dot product because heapq is a min heap
+            # Convert avg_dot_product to a single scalar value
+            avg_similarity_score = avg_dot_product.mean().item()  # Taking mean and converting to Python scalar
+
+            # Use negative similarity because heapq is a min heap
             if len(top_similarities) < top_k:
-                heapq.heappush(top_similarities, (-avg_dot_product, token_pos))
+                heapq.heappush(top_similarities, (-avg_similarity_score, token_pos))
             else:
-                heapq.heappushpop(top_similarities, (-avg_dot_product, token_pos))
+                heapq.heappushpop(top_similarities, (-avg_similarity_score, token_pos))
+
 
         top_positions = [pos for _, pos in sorted(top_similarities, reverse=True)]
         top_kv_slices = [(evicted_kv_pair[0][:, :, top_positions, :], evicted_kv_pair[1][:, :, top_positions, :])]
