@@ -117,17 +117,28 @@ def calculate_kv_sets_similarity(aggregated_kv_set1, aggregated_kv_set2):
 def find_top_similar_kv_sets(current_kv_sets, evicted_data_sets, top_k=3):
     """Find the top_k most similar sets of KV pairs from the evicted data."""
     similarity_scores = []
+
+    # Aggregate the representations in the current KV pairs
     aggregated_current_kv = aggregate_representation(current_kv_sets)
 
     for evicted_kv_set in evicted_data_sets:
-        aggregated_evicted_kv = aggregate_representation(evicted_kv_set)
-        similarity = calculate_kv_sets_similarity(aggregated_current_kv, aggregated_evicted_kv)
-        similarity_scores.append((evicted_kv_set, similarity))
+        # Make sure we are passing a list of KV pairs to aggregate_representation
+        if isinstance(evicted_kv_set, list) and all(len(kv_pair) == 2 for kv_pair in evicted_kv_set):
+            aggregated_evicted_kv = aggregate_representation(evicted_kv_set)
+            similarity = calculate_kv_sets_similarity(aggregated_current_kv, aggregated_evicted_kv)
+            similarity_scores.append((evicted_kv_set, similarity))
+        else:
+            print(f"Skipping invalid KV set structure: {evicted_kv_set}")
+
+    # Avoid division by zero
+    if not similarity_scores:
+        return []
 
     # Sort by similarity score and select the top_k sets
     top_similar_kv_sets = sorted(similarity_scores, key=lambda x: x[1], reverse=True)[:top_k]
 
     return [set_ for set_, _ in top_similar_kv_sets]
+
 
 
 
@@ -153,14 +164,6 @@ def streaming_inference(model, tokenizer, prompts, kv_cache=None, max_gen_len=10
 
         if past_key_values:
             if evicted_data != []:
-
-                print("Inspecting evicted data structure:")
-                for i, item in enumerate(evicted_data):
-                    print(f"Element {i}: Length - {len(item)}, Type - {type(item)}")
-
-                print("\nInspecting past key values structure:")
-                for i, item in enumerate(past_key_values):
-                    print(f"Element {i}: Length - {len(item)}, Type - {type(item)}")
 
                 # Assuming you have past_key_values and evicted_data defined
                 top_kv_sets = find_top_similar_kv_sets(past_key_values, evicted_data, top_k=3)
