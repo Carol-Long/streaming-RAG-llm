@@ -121,14 +121,14 @@ def find_top_similar_kv_sets(current_kv_sets, evicted_data_sets, top_k=3):
 
     # Aggregate the representations in the current KV pairs
     aggregated_current_kv = aggregate_representation(current_kv_sets)
-    print(len(aggregated_current_kv))
-    print(len(aggregated_current_kv[0]))
-    print(aggregated_current_kv[0][0].size())
 
     for evicted_kv_set in evicted_data_sets:
         # Make sure we are passing a list of KV pairs to aggregate_representation
         if isinstance(evicted_kv_set, list) and all(len(kv_pair) == 2 for kv_pair in evicted_kv_set):
             aggregated_evicted_kv = aggregate_representation(evicted_kv_set)
+            print(len(aggregated_evicted_kv))
+            print(len(aggregated_evicted_kv[0]))
+            print(aggregated_evicted_kv[0][0].size())
             similarity = calculate_kv_sets_similarity(aggregated_current_kv, aggregated_evicted_kv)
             similarity_scores.append((evicted_kv_set, similarity))
 
