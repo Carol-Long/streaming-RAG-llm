@@ -150,8 +150,8 @@ def calculate_and_retrieve_top_slices_cosine_similarity(current_kv_sets, evicted
 
     return top_slices
 
-def calculate_and_retrieve_top_slices_dot_product(current_kv_sets, evicted_data_sets, top_k):
-    top_slices = []
+# def calculate_and_retrieve_top_slices_dot_product(current_kv_sets, evicted_data_sets, top_k):
+#     top_slices = []
 
     # Aggregate current_kv_sets
     # aggregated_current_k = torch.mean(torch.cat([kv[0] for kv in current_kv_sets], dim=2), dim=2)
